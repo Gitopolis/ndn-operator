@@ -1,10 +1,8 @@
 use std::sync::Arc;
-use super::router::{Router, create_owned_router};
-use crate::{daemonset::*, Context, Error, Result};
-use k8s_openapi::api::{apps::v1::DaemonSet, core::v1::{Node, Pod}};
+use crate::{daemonset::*, helper::*, Context, Error, Result};
+use k8s_openapi::api::apps::v1::DaemonSet;
 use kube::{
-    api::{Api, ListParams, Patch, PatchParams, ResourceExt},
-    client::Client,
+    api::{Api, Patch, PatchParams, ResourceExt},
     runtime::{
         controller::Action,
         events::{Event, EventType},
@@ -14,7 +12,6 @@ use serde::{Deserialize, Serialize};
 use schemars::JsonSchema;
 use serde_json::json;
 use tokio::time::Duration;
-use tracing::*;
 
 pub static NETWORK_FINALIZER: &str = "networks.named-data.net/finalizer";
 pub static MANAGER_NAME: &str = "ndnd-controller";
@@ -65,35 +62,6 @@ impl Network {
                 ds_created: Some(true),
             }
         });
-        // List all nodes
-        let nodes: Api<Node> = Api::all(ctx.client.clone());
-        let lp = ListParams::default();
-        let node_list = nodes.list(&lp).await.map_err(Error::KubeError)?;
-        // Reconcile a router object for each node
-        for node in node_list.items {
-            let node_name = node.metadata.name.clone().unwrap();
-            info!("Reconciling router for node {}", node_name);
-            let router_data = create_owned_router(&self, &node);
-            let router_name = router_data.name_any();
-            let api_router = Api::<Router>::namespaced(ctx.client.clone(), &self.namespace().unwrap());
-            let router = api_router
-                .patch(&router_name, &serverside, &Patch::Apply(router_data))
-                .await
-                .map_err(Error::KubeError)?;
-            ctx.recorder
-                .publish(
-                    &Event {
-                        type_: EventType::Normal,
-                        reason: "RouterCreated".into(),
-                        note: Some(format!("Created `{}` Router for `{}` Network", router.name_any(), self.name_any())),
-                        action: "Created".into(),
-                        secondary: None,
-                    },
-                    &self.object_ref(&()),
-                )
-                .await
-                .map_err(Error::KubeError)?;
-        }
         let _o = api_nw
             .patch_status(&self.name_any(), &serverside, &Patch::Merge(&status))
             .await
@@ -118,17 +86,4 @@ impl Network {
             .map_err(Error::KubeError)?;
         Ok(Action::await_change())
     }
-}
-
-fn get_my_namespace() -> String {
-    std::fs::read_to_string("/var/run/secrets/kubernetes.io/serviceaccount/namespace").unwrap()
-}
-
-fn get_my_pod_name() -> String {
-    std::fs::read_to_string("/etc/hostname").unwrap().trim_end_matches('\n').to_string()
-}
-
-async fn get_my_pod(client: Client) -> Result<Pod> {
-    let pods = Api::<Pod>::namespaced(client, &get_my_namespace());
-    pods.get(&get_my_pod_name()).await.map_err(crate::Error::KubeError)
 }

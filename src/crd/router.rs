@@ -1,4 +1,3 @@
-use k8s_openapi::api::core::v1::Node;
 use kube::{api::ObjectMeta, CustomResource, Resource, ResourceExt};
 use serde::{Deserialize, Serialize};
 use schemars::JsonSchema;
@@ -18,11 +17,11 @@ pub struct RouterStatus {
     faces: Vec<String>,
 }
 
-pub fn create_owned_router(source: &Network, node: &Node) -> Router {
+pub fn create_owned_router(source: &Network, name: String, node_name: String) -> Router {
     let oref = source.controller_owner_ref(&()).unwrap();
     Router {
         metadata: ObjectMeta {
-            name: Some(format!("{}-{}", source.name_any(), node.name_any())),
+            name: Some(name),
             namespace: source.namespace(),
             owner_references: Some(vec![oref]),
             labels: Some(source.labels().clone()),
@@ -31,7 +30,7 @@ pub fn create_owned_router(source: &Network, node: &Node) -> Router {
         },
         spec: RouterSpec {
             prefix: source.spec.prefix.clone(),
-            node: node.name_any(),
+            node: node_name,
         },
         status: None,
     }

@@ -39,6 +39,17 @@ pub fn create_owned_daemonset(source: &Network, image: Option<String>, service_a
                                 ..EnvVar::default()
                             },
                             EnvVar {
+                                name: "NDN_NETWORK_NAMESPACE".to_string(),
+                                value_from: Some(EnvVarSource {
+                                    field_ref: Some(ObjectFieldSelector {
+                                        field_path: "metadata.namespace".to_string(),
+                                        ..ObjectFieldSelector::default()
+                                    }),
+                                    ..EnvVarSource::default()
+                                }),
+                                ..EnvVar::default()
+                            },
+                            EnvVar {
                                 name: "NDN_ROUTER_NAME".to_string(),
                                 value_from: Some(EnvVarSource {
                                     field_ref: Some(ObjectFieldSelector {

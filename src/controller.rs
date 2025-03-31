@@ -109,12 +109,4 @@ pub async fn run(state: State) {
         .filter_map(async |x| { std::result::Result::ok(x) })
         .for_each(|_| futures::future::ready(()))
         .await;
-
-    let api_nodes: Api<Node> = Api::all(client);
-    let wc = watcher::Config::default().streaming_lists();
-    let _ = watcher(api_nodes, wc).applied_objects().try_for_each(async |node| {
-        let node_name = node.metadata.name.as_deref().unwrap_or_default();
-        info!("Node watcher: {node_name}");
-        Ok(())
-    }).await;
 }
