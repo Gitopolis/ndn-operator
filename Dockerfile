@@ -10,6 +10,6 @@ RUN cargo build --release
 FROM debian:bullseye-slim
 
 COPY --from=builder /usr/src/app/target/release/ndn-operator /
-COPY --from=builder /usr/src/app/target/release/genconfig /
+COPY --from=builder /usr/src/app/target/release/pod_init /
 
 CMD ["/ndn-operator"]

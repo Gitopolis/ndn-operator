@@ -13,7 +13,7 @@ path = "src/bin/gencrd.rs"
 
 [[bin]]
 name = "genconfig"
-path = "src/bin/init_pod.rs"
+path = "src/bin/pod_init.rs"
 
 [dependencies]
 actix-web = "4.9.0"

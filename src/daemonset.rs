@@ -31,7 +31,7 @@ pub fn create_owned_daemonset(source: &Network, image: Option<String>, service_a
                     init_containers: Some(vec![Container {
                         name: "gencfg".to_string(),
                         image: image,
-                        command: vec!["/genconfig".to_string(), "--output".to_string(), "/etc/ndnd/example.yml".to_string()].into(),
+                        command: vec!["/pod_init".to_string(), "--output".to_string(), "/etc/ndnd/example.yml".to_string()].into(),
                         env: Some(vec![
                             EnvVar {
                                 name: "NDN_NETWORK_NAME".to_string(),
