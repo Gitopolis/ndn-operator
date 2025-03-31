@@ -1,7 +1,6 @@
 use crate::{crd::{NETWORK_FINALIZER, Network}, Error, Result};
 use chrono::{DateTime, Utc};
-use futures::{StreamExt, TryStreamExt};
-use k8s_openapi::api::core::v1::Node;
+use futures::StreamExt;
 
 use std::sync::Arc;
 use kube::{
@@ -10,7 +9,6 @@ use kube::{
         events::{Recorder, Reporter},
         finalizer::{finalizer, Event as Finalizer},
         watcher,
-        WatchStreamExt,
     }
 };
 use serde::Serialize;
